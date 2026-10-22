@@ -1,0 +1,23 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# PyInstaller(产物走 GitHub Releases 发布,不进仓库)
+build/
+dist/
+*.spec
+
+# 内部工作文档与记忆,不上开源仓库
+Plan/
+.workbuddy/
+
+# UPX 压缩工具(自行下载放入,见 build.bat 注释)
+tools/
+
+# 运行时数据(防误提交本机历史与设置)
+history.json
+settings.json
+*.bad
+*.tmp
