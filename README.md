@@ -1,5 +1,7 @@
 # ClipVault — Windows 剪贴板历史工具
 
+[![Build & Release](https://github.com/Honshawn/ClipVault/actions/workflows/release.yml/badge.svg)](https://github.com/Honshawn/ClipVault/actions/workflows/release.yml)
+
 小体量剪贴板管理器:自动记录你复制过的**文本、图片、文件**(最多 100 条),随时粘回。
 纯本地运行,**零网络通信**,无任何遥测。
 
@@ -69,6 +71,17 @@ python -m venv .venv
 ## 自行打包
 
 双击 `build.bat`(前置条件见脚本内注释),产物在 `dist\ClipVault.exe`。
+
+## 自动发布
+
+推送版本 tag 会自动构建 exe 并创建 Release(GitHub Actions,见 `.github/workflows/release.yml`):
+
+```bat
+git tag v1.0.1
+git push origin v1.0.1
+```
+
+也可在仓库 Actions 页面手动触发 `Build & Release`,只产出构建物、不发布。
 
 ## 测试
 
