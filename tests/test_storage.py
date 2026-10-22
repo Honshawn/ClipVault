@@ -5,6 +5,12 @@ import os
 import sys
 import tempfile
 
+# CI(cp1252 控制台)与本地(cp936)都能正常输出中文
+try:
+    sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+except Exception:
+    pass
+
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import config
