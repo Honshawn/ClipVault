@@ -62,6 +62,7 @@ class HistoryStorage:
         self._lock = threading.Lock()
         self._listeners = []
         self._save_lock = threading.Lock()
+        self._write_lock = threading.Lock()   # 串行化落盘,防定时器与 flush 同写一个 tmp
         self._save_timer = None
         self._dirty = False
         os.makedirs(config.IMAGE_DIR, exist_ok=True)
@@ -155,15 +156,15 @@ class HistoryStorage:
             self._dirty = False
         self._write(self._snapshot())
 
-    @staticmethod
-    def _write(data: list):
-        tmp = config.HISTORY_FILE + ".tmp"
-        try:
-            with open(tmp, "w", encoding="utf-8") as f:
-                json.dump(data, f, ensure_ascii=False)
-            os.replace(tmp, config.HISTORY_FILE)
-        except OSError:
-            pass  # 持久化失败不影响内存运行
+    def _write(self, data: list):
+        with self._write_lock:
+            tmp = config.HISTORY_FILE + ".tmp"
+            try:
+                with open(tmp, "w", encoding="utf-8") as f:
+                    json.dump(data, f, ensure_ascii=False)
+                os.replace(tmp, config.HISTORY_FILE)
+            except OSError:
+                pass  # 持久化失败不影响内存运行
 
     def load(self):
         """启动时恢复;文件损坏则改名 .bad 后以空历史启动(放行+标记)。"""

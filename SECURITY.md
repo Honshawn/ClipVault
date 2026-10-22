@@ -18,4 +18,11 @@
 
 ## 报告漏洞
 
-发现安全问题请开 Issue(不要公开敏感细节),或直接提 PR。
+**请优先使用 GitHub 私密漏洞报告**,不要在公开 Issue 里贴复现细节或敏感数据:
+
+https://github.com/Honshawn/ClipVault/security/advisories/new
+
+- 适用版本:当前 `main` 分支与最新 Release
+- 期望响应:7 天内确认收到,30 天内给出修复计划或说明
+- 修复发布后会在 Release Notes 与 Advisory 中致谢(除非你要求匿名)
+- 非安全类问题(功能建议、使用疑问)请走公开 Issue

@@ -60,6 +60,15 @@ def _pick_family(root) -> str:
     return "TkDefaultFont"  # 极端兜底(常规 Windows 环境不会命中)
 
 
+def clamp_int(value, lo: int, hi: int, default: int) -> int:
+    """settings.json 可被手工改坏:非法值回退默认,合法值夹到区间内。"""
+    try:
+        v = int(value)
+    except (TypeError, ValueError):
+        return default
+    return max(lo, min(hi, v))
+
+
 class HistoryPanel(tk.Toplevel):
     ROW_H = 44
 
@@ -77,11 +86,11 @@ class HistoryPanel(tk.Toplevel):
         self._drag_origin = None
         self._i18n_widgets = []   # [(widget, key)] 语言切换时统一重设文案
 
-        # 用户设置
+        # 用户设置(做边界校验:settings.json 可被手工改坏)
         s = config.load_settings()
-        self._panel_w = int(s["panel_w"])
-        self._panel_h = int(s["panel_h"])
-        self._detail_fixed_h = int(s["detail_h"])   # 0 = 自适应
+        self._panel_w = clamp_int(s["panel_w"], MIN_W, 2000, DEFAULT_W)
+        self._panel_h = clamp_int(s["panel_h"], MIN_H, 1600, DEFAULT_H)
+        self._detail_fixed_h = clamp_int(s["detail_h"], 0, 400, 0)   # 0 = 自适应
         self.hide_after_paste = bool(s["hide_after_paste"])
 
         self.withdraw()
@@ -306,8 +315,8 @@ class HistoryPanel(tk.Toplevel):
         return lb
 
     # ---- 自绘按钮:主 / 次要(描边) / 危险 三套 ----
-    def _button(self, parent, key, cmd, kind="secondary", text=None):
-        """key 为 i18n 键;text 可覆盖(设置窗里的按钮用同一套样式)。"""
+    def _button(self, parent, key, cmd, kind="secondary", text=None, i18n=True):
+        """key 为 i18n 键;text 可覆盖;设置窗内的按钮不参与面板的文案重设。"""
         spec = {
             "primary": dict(bg=THEME["primary"], fg="#FFFFFF",
                             hover=THEME["primary_hover"], press=THEME["primary_pressed"],
@@ -339,17 +348,21 @@ class HistoryPanel(tk.Toplevel):
         lb.bind("<ButtonRelease-1>", on_release)
         lb.bind("<Enter>", lambda e: lb.config(bg=spec["hover"]))
         lb.bind("<Leave>", lambda e: lb.config(bg=spec["bg"]))
-        self._i18n_widgets.append((lb, key))
+        if i18n:
+            self._i18n_widgets.append((lb, key))
         return lb
 
     def retranslate(self):
         """语言切换后重设所有静态文案,并重绘列表/详情。"""
+        alive = []
         for widget, key in self._i18n_widgets:
             try:
                 if widget.winfo_exists():
                     widget.config(text=t(key))
+                    alive.append((widget, key))
             except Exception:
                 pass
+        self._i18n_widgets = alive   # 丢弃已销毁控件(设置窗开关多次不会累积)
         self._ph_text = t("search_ph")
         if self._ph_active:
             self.filter_var.set(self._ph_text)
@@ -657,8 +670,12 @@ class HistoryPanel(tk.Toplevel):
         if item.kind == "image":
             self.detail_text.pack_forget()
             self.detail_img.pack(fill="both", expand=True)
-            path = os.path.join(config.IMAGE_DIR, item.image_file)
+            # 只取文件名:history.json 被篡改时也不能用 ../ 读盘外文件
+            name = os.path.basename(item.image_file or "")
+            path = os.path.join(config.IMAGE_DIR, name)
             try:
+                if not name:
+                    raise ValueError("empty image name")
                 img = Image.open(path)
                 avail_h = max(self.px(80), self.detail.winfo_height() - self.px(24))
                 img.thumbnail((self.px(520), avail_h))
@@ -734,8 +751,8 @@ class HistoryPanel(tk.Toplevel):
 
         row = tk.Frame(win, bg=THEME["bg"])
         row.grid(row=5, column=0, sticky="ew", padx=pad, pady=self.px(16))
-        self._button(row, "reset_sizes", self._reset_sizes, "secondary").pack(side="left")
-        self._button(row, "btn_close", win.destroy, "primary").pack(side="right")
+        self._button(row, "reset_sizes", self._reset_sizes, "secondary", i18n=False).pack(side="left")
+        self._button(row, "btn_close", win.destroy, "primary", i18n=False).pack(side="right")
 
         # 居中于面板上方
         win.update_idletasks()

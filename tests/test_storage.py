@@ -96,4 +96,20 @@ s7.load()
 check("自愈: 损坏文件改名 .bad", os.path.exists(config.HISTORY_FILE + ".bad"))
 check("自愈: 损坏后以空历史启动", s7.count() == 0)
 
+# 7. 并发落盘不产生损坏文件(定时器线程与 flush 同时写)
+import threading
+if os.path.exists(config.HISTORY_FILE + ".bad"):
+    os.remove(config.HISTORY_FILE + ".bad")   # 清掉上一条用例故意留下的损坏文件
+s8 = HistoryStorage()
+s8.add(make_text_item(8))
+threads = [threading.Thread(target=s8.flush) for _ in range(8)]
+for th in threads:
+    th.start()
+for th in threads:
+    th.join()
+s9 = HistoryStorage()
+s9.load()
+check("并发: 多线程 flush 后文件仍可解析", s9.count() == 1)
+check("并发: .bad 未被触发", not os.path.exists(config.HISTORY_FILE + ".bad"))
+
 print(f"\n全部通过: {passed} 项")

@@ -94,3 +94,6 @@ git push origin v1.0.1
 ## License
 
 MIT,见 [LICENSE](LICENSE)。
+
+打包产物包含第三方组件,其中托盘库 pystray 为 **LGPL-3.0**,许可证声明与替换方式见
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。

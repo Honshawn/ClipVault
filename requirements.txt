@@ -1,5 +1,6 @@
-pywin32>=312
-Pillow>=13.0.0
-keyboard>=0.13.5
-pystray>=0.19.5
-pyinstaller>=6.0
+# 运行依赖(锁定版本,保证 CI 与本地构建一致;升级请同步改 README 与第三方声明)
+pywin32==312
+Pillow==13.0.0
+keyboard==0.13.5
+pystray==0.19.5
+pyinstaller==6.22.3

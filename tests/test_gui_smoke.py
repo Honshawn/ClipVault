@@ -244,5 +244,26 @@ check("反馈: 状态栏显示临时文案", app.panel.status.cget("text") == "�
 app.panel._reset_status()
 check("反馈: 自熄后恢复计数", "条" in app.panel.status.cget("text"))
 
+# 安全回归:settings 越界值被夹紧;图片文件名只取 basename;i18n 列表不累积
+import panel as panel_mod
+check("校验: 非法设置回退默认", panel_mod.clamp_int("abc", 480, 2000, 620) == 620)
+check("校验: 超大值被夹到上限", panel_mod.clamp_int(999999, 480, 2000, 620) == 2000)
+check("校验: 负数被夹到下限", panel_mod.clamp_int(-5, 0, 400, 0) == 0)
+
+before = len(app.panel._i18n_widgets)
+for _ in range(3):
+    app.panel.open_settings()
+    app.root.update()
+    app.panel.hide()
+check("i18n: 反复开关设置窗不累积控件引用", len(app.panel._i18n_widgets) == before)
+
+app.panel.show()
+app.root.update()
+app.storage.add(ClipItem(kind="image", image_file="../../evil.png", content_hash="evil"))
+app.panel.refresh()
+app.panel.select_index(0)
+app.root.update()
+check("安全: 图片路径穿越被拦截", app.panel.detail_img.cget("image") == "")
+
 app.root.destroy()
 print(f"\n全部通过: {passed} 项")
